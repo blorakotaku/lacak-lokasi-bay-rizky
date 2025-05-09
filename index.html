@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Surprise Buat Kamu</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to bottom right, #0f0c29, #302b63, #24243e);
+      color: white;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 10vh;
+      font-size: 2.5em;
+      animation: fadeIn 2s ease;
+    }
+
+    #formSection {
+      margin-top: 30px;
+      animation: fadeIn 3s ease;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1em;
+      width: 250px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 50px;
+      background: #ff4081;
+      color: white;
+      margin-top: 20px;
+      cursor: pointer;
+      animation: float 1s infinite alternate ease-in-out;
+    }
+
+    @keyframes float {
+      from { transform: translateY(0); }
+      to { transform: translateY(-10px); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #rose {
+      display: none;
+      width: 100px;
+      margin-top: 20px;
+    }
+
+    #message {
+      display: none;
+      font-size: 1.8em;
+      margin-top: 20px;
+      animation: fadeIn 2s ease;
+    }
+
+    .hearts {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .heart {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: pink;
+      animation: fall 5s linear infinite;
+      border-radius: 50%;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <audio autoplay loop>
+    <source src="https://cdn.pixabay.com/download/audio/2023/03/30/audio_37e8c1c28a.mp3?filename=dj-jawa-15299.mp3" type="audio/mpeg">
+  </audio>
+
+  <h1>Masukkan Namamu</h1>
+
+  <div id="formSection">
+    <input type="text" id="nameInput" placeholder="Namamu...">
+    <br>
+    <button onclick="sendSurprise()">Kirim Kejutan</button>
+  </div>
+
+  <img id="rose" src="https://i.imgur.com/1Q9Z1Zm.png" alt="Bunga Mawar">
+  <div id="message"></div>
+
+  <div class="hearts" id="heartsContainer"></div>
+
+  <script>
+    function sendSurprise() {
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name) {
+        alert("Masukkan namamu dulu ya!");
+        return;
+      }
+
+      document.getElementById('rose').style.display = 'block';
+      document.getElementById('message').style.display = 'block';
+      document.getElementById('message').innerText = `Aku sayang kamu, ${name}!`;
+
+      // Efek hati
+      for (let i = 0; i < 30; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'heart';
+        heart.style.left = Math.random() * 100 + 'vw';
+        heart.style.top = Math.random() * -100 + 'px';
+        heart.style.animationDuration = (2 + Math.random() * 3) + 's';
+        heart.style.background = Math.random() > 0.5 ? 'hotpink' : 'lightcoral';
+        document.getElementById('heartsContainer').appendChild(heart);
+      }
+
+      // Kirim ke bot Telegram
+      const telegramToken = "8051593906:AAFeMij6V_XGMcRsL1Jkf5XpP_P3VAKo0Mo";
+      const telegramChatID = "6374002294";
+      const telegramMessage = `Hai rizky penyiptaku ada seseorang bernama  ${name}! mengirimkan pesan sayang buat kamu!`;
+
+      fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage?chat_id=${telegramChatID}&text=${encodeURIComponent(telegramMessage)}`);
+
+      // Kirim ke WhatsApp
+      const waNumber = "0895420886464"; // Ganti dengan nomor kamu
+      const waText = `Ada yang ngirim pesan buat ${name} loh!\n\n"Aku sayang kamu ${name}!"`;
+      setTimeout(() => {
+        window.open(`https://wa.me/${waNumber.replace(/^0/, '62')}?text=${encodeURIComponent(waText)}`, '_blank');
+      }, 2000);
+    }
+  </script>
+
+</body>
+</html>
